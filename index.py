@@ -9,8 +9,9 @@ from tkinter import ttk;
 
 # List Processes what you want watch
 # P.S.: Only watch one process by time
-PROCESSNAME = ['LeagueClient', 'Discord'];
+PROCESSNAME = ['LeagueClient', 'EoCApp', 'Baldur'];
 ACTIVEPROCESS = None;
+PID = None;
 
 # Times for limit
 HOURS = 2;
@@ -18,7 +19,7 @@ MINUTES = 30;
 SECONDS = 0;
 
 # Warning popup in minutes before the time limit
-WARNINGTIME = 1;
+WARNINGTIME = 30;
 # Auto close the pop after the time (in milliseconds)
 CLOSETIME = 180000;
 
@@ -70,8 +71,7 @@ def findPid():
 # Finish the process
 def killProcess():
     for proc in psutil.process_iter():
-        # Check whether the process name matches
-        if proc.name().lower() == ACTIVEPROCESS.lower():
+        if proc.pid == PID:
             proc.kill();
 
 # Check if any process was running or not.
@@ -103,6 +103,8 @@ def main():
     timeWarning = datetime.timedelta(minutes=WARNINGTIME);
     
     warned = False;
+    global PID;
+    PID = None;
 
     while(isRunning()):
         currentTime = datetime.datetime.now();
@@ -112,6 +114,9 @@ def main():
             processCreateTime = datetime.datetime.fromtimestamp(elem['create_time']);
             timeInterval = currentTime - processCreateTime;
 
+            if PID is None:
+                PID = elem['pid'];
+
         if not warned and (timeInterval + timeWarning) >= timeLimit:
             popUpMsg();
             warned = True;
@@ -119,10 +124,11 @@ def main():
         if timeInterval >= timeLimit:
             timeFinished = datetime.datetime.strftime(currentTime, '%Y-%m-%d %H:%M:%S');
             killProcess();
-            print(timeFinished + ' - ' + ACTIVEPROCESS.upper() + ' KILLED');
+            print(timeFinished + ' - ' + ACTIVEPROCESS.upper() + ' PROCESS KILLED');
             print('Time the process was active: ' + str(timeInterval) + '\n');
             main();
 
+    print('No Process Running.');
     main();
 
 if __name__ == '__main__':
